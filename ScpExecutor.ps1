@@ -36,49 +36,46 @@ function ScpExecutor {
     foreach ($t in $task) {
         switch ($t.mode) {
             'put' {
-                # 處理多行的本地檔案路徑
-                $localFiles = $t.local -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-                
-                # 處理遠端路徑
-                if ($t.remote -notmatch "`n") {
-                    # 單一目標目錄模式
-                    $remoteTarget = "$($sevr.user)@$($sevr.host):$($t.remote.Trim())"
-                    $scpCommand = "scp $scpOptions $($localFiles -join ' ') $remoteTarget"
-                    Write-Verbose $scpCommand
-                    Invoke-Expression $scpCommand
-                }
-                else {
-                    # 一對一模式
-                    $remoteFiles = $t.remote -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-                    for ($i = 0; $i -lt $localFiles.Count; $i++) {
-                        $remoteTarget = "$($sevr.user)@$($sevr.host):$($remoteFiles[$i])"
-                        $scpCommand = "scp $scpOptions $($localFiles[$i]) $remoteTarget"
-                        Write-Verbose $scpCommand
-                        Invoke-Expression $scpCommand
+                $source = $t.local
+                $target = $t.remote
+            }
+            'get' {
+                $source = $t.remote
+                $target = $t.local
+            }
+        }
+        
+        switch ($t.mode) {
+            'put' {
+                # 處理來源檔案路徑
+                $sourcePath = $source -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+                if ($target -notmatch "`n") {
+                    $targetPath = "$($sevr.user)@$($sevr.host):$($target.Trim())"
+                    $scpCommand = "scp $scpOptions $($sourcePath -join ' ') $targetPath"
+                    Write-Output $scpCommand
+                } else {
+                    $targetPath = $target -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+                    for ($i = 0; $i -lt $sourcePath.Count; $i++) {
+                        $target = "$($sevr.user)@$($sevr.host):$($targetPath[$i])"
+                        $scpCommand = "scp $scpOptions $($sourcePath[$i]) $target"
+                        Write-Output $scpCommand
                     }
                 }
             }
             'get' {
-                # 處理遠端檔案路徑
-                $remoteFiles = $t.remote -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-                if ($t.local -notmatch "`n") {
-                    # 多檔案到單一目錄模式
-                    $localTarget = $t.local.Trim()
-                    $remoteFiles = $remoteFiles | ForEach-Object {
-                        "$($sevr.user)@$($sevr.host):$_"
-                    }
-                    $scpCommand = "scp $scpOptions $($remoteFiles -join ' ') $localTarget"
-                    Write-Verbose $scpCommand
-                    Invoke-Expression $scpCommand
-                }
-                else {
-                    # 一對一模式
-                    $localFiles = $t.local -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-                    for ($i = 0; $i -lt $remoteFiles.Count; $i++) {
-                        $remoteSource = "$($sevr.user)@$($sevr.host):$($remoteFiles[$i])"
-                        $scpCommand = "scp $scpOptions $remoteSource $($localFiles[$i])"
-                        Write-Verbose $scpCommand
-                        Invoke-Expression $scpCommand
+                # 處理來源檔案路徑
+                $sourcePath = $source -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+                if ($target -notmatch "`n") {
+                    $sourcePath = @($sourcePath) | ForEach-Object { "$($sevr.user)@$($sevr.host):$_" }
+                    $targetPath = $target.Trim()
+                    $scpCommand = "scp $scpOptions $($sourcePath -join ' ') $targetPath"
+                    Write-Output $scpCommand
+                } else {
+                    $targetPath = $target -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+                    for ($i = 0; $i -lt $sourcePath.Count; $i++) {
+                        $source = "$($sevr.user)@$($sevr.host):$($sourcePath[$i])"
+                        $scpCommand = "scp $scpOptions $source $($targetPath[$i])"
+                        Write-Output $scpCommand
                     }
                 }
             }
@@ -86,4 +83,23 @@ function ScpExecutor {
     }
 }
 
-ScpExecutor RedHat79 Task1 Task2 Task3 Task4 -Verbose
+
+
+$testStr = @"
+scp -oIdentityFile=C:/Users/hunan/.ssh/id_ed25519 -oBatchMode=yes local_dir1/File1.txt local_dir2/File2.txt chg@192.168.3.53:~/remote_dir/
+scp -oIdentityFile=C:/Users/hunan/.ssh/id_ed25519 -oBatchMode=yes chg@192.168.3.53:~/remote_dir1/File1.txt chg@192.168.3.53:~/remote_dir2/File2.txt local_dir/
+scp -oIdentityFile=C:/Users/hunan/.ssh/id_ed25519 -oBatchMode=yes chg@192.168.3.53:~/remote_dir1/File1.txt local_dir1/File1.txt
+scp -oIdentityFile=C:/Users/hunan/.ssh/id_ed25519 -oBatchMode=yes chg@192.168.3.53:~/remote_dir2/File2.txt local_dir2/File2.txt
+scp -oIdentityFile=C:/Users/hunan/.ssh/id_ed25519 -oBatchMode=yes local_dir1/File1.txt chg@192.168.3.53:~/remote_dir1/File1.txt
+scp -oIdentityFile=C:/Users/hunan/.ssh/id_ed25519 -oBatchMode=yes local_dir2/File2.txt chg@192.168.3.53:~/remote_dir2/File2.txt
+"@ -split "`n" 
+
+ScpExecutor RedHat79 Task1 Task2 Task3 Task4 | ForEach-Object -Begin { $i = 0 } -Process {
+    if ($_ -eq $testStr[$i]) {
+        Write-Host "$_" -ForegroundColor Green
+    } else {
+        Write-Host "$_" -ForegroundColor Red
+    }
+    $i++
+}
+

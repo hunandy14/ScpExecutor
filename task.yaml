@@ -4,7 +4,7 @@ task1:
     local_dir1/File1.txt
     local_dir2/File2.txt
   remote:
-    ~/remote_dir1/
+    ~/remote_dir/
 
 task2:
   mode: get
