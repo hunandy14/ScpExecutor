@@ -1,0 +1,33 @@
+task1:
+  mode: put
+  local: |-
+    local_dir1/File1.txt
+    local_dir2/File2.txt
+  remote:
+    ~/remote_dir1/
+
+task2:
+  mode: get
+  local:
+    local_dir/
+  remote: |-
+    ~/remote_dir1/File1.txt
+    ~/remote_dir2/File2.txt
+
+task3:
+  mode: get
+  local: |-
+    local_dir1/File1.txt
+    local_dir2/File2.txt
+  remote: |-
+    ~/remote_dir1/File1.txt
+    ~/remote_dir2/File2.txt
+
+task4:
+  mode: put
+  local: |-
+    local_dir1/File1.txt
+    local_dir2/File2.txt
+  remote: |-
+    ~/remote_dir1/File1.txt
+    ~/remote_dir2/File2.txt
