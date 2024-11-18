@@ -31,17 +31,13 @@ function ScpExecutor {
         
         # 預處理所有遠端路徑，無論是 get 還是 put 模式
         if ($taskConfig.remote.Count -eq 1) {
-            # 單一目標目錄
             $taskConfig.remote = @("$($sevr.user)@$($sevr.host):$($taskConfig.remote[0])")
         } else {
-            # 多個目標路徑
             $taskConfig.remote = $taskConfig.remote | ForEach-Object { "$($sevr.user)@$($sevr.host):$_" }
         }
         
         $taskConfig
     }
-    
-    Write-Host $($task | ConvertTo-Json -Depth 10)
     
     # 建構 SCP 基本選項
     $scpOptions = $sevr.option.GetEnumerator() | ForEach-Object {
@@ -50,32 +46,19 @@ function ScpExecutor {
     
     # 處理每個任務
     foreach ($t in $task) {
-        switch ($t.mode) {
-            'put' {
-                if ($t.remote.Count -eq 1) {
-                    # 單一目標目錄
-                    $scpCommand = "scp $scpOptions $($t.local -join ' ') $($t.remote[0])"
-                    Write-Output $scpCommand
-                } else {
-                    # 多個目標路徑
-                    for ($i = 0; $i -lt $t.local.Count; $i++) {
-                        $scpCommand = "scp $scpOptions $($t.local[$i]) $($t.remote[$i])"
-                        Write-Output $scpCommand
-                    }
-                }
-            }
-            'get' {
-                if ($t.local.Count -eq 1) {
-                    # 單一目標目錄
-                    $scpCommand = "scp $scpOptions $($t.remote -join ' ') $($t.local[0])"
-                    Write-Output $scpCommand
-                } else {
-                    # 多個目標路徑
-                    for ($i = 0; $i -lt $t.remote.Count; $i++) {
-                        $scpCommand = "scp $scpOptions $($t.remote[$i]) $($t.local[$i])"
-                        Write-Output $scpCommand
-                    }
-                }
+        
+        # 根據模式決定源和目標
+        $source = @(if ($t.mode -eq 'put') { $t.local } else { $t.remote })
+        $target = @(if ($t.mode -eq 'put') { $t.remote } else { $t.local })
+        
+        # 處理scp命令
+        if ($target.Count -eq 1) {
+            $scpCommand = "scp $scpOptions $($source -join ' ') $($target[0])"
+            Write-Output $scpCommand
+        } else {
+            for ($i = 0; $i -lt $source.Count; $i++) {
+                $scpCommand = "scp $scpOptions $($source[$i]) $($target[$i])"
+                Write-Output $scpCommand
             }
         }
     }
