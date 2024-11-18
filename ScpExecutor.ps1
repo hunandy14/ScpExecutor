@@ -51,14 +51,13 @@ function ScpExecutor {
         $source = @(if ($t.mode -eq 'put') { $t.local } else { $t.remote })
         $target = @(if ($t.mode -eq 'put') { $t.remote } else { $t.local })
         
-        # 處理scp命令
+        # 建立基本選項陣列
+        $optionsArray = @($scpOptions.GetEnumerator() | ForEach-Object { "-o$($_.Key)=$($_.Value)" })
+        
         if ($target.Count -eq 1) {
-            # 創建新的有序字典而不是使用Clone
-            $newOptions = [ordered]@{}
-            $scpOptions.GetEnumerator() | ForEach-Object { $newOptions[$_.Key] = $_.Value }
-            
+            # 多來源到單一目標的情況
             $scpParams = [ordered]@{
-                Options = @($newOptions.GetEnumerator() | ForEach-Object { "-o$($_.Key)=$($_.Value)" })
+                Options = $optionsArray
                 Sources = $source
                 Target  = $target[0]
             }
@@ -67,17 +66,14 @@ function ScpExecutor {
             $scpCommand = "scp $($scpParams.Options -join ' ') $($scpParams.Sources -join ' ') $($scpParams.Target)"
             Write-Output $scpCommand
             
-            # 執行scp命令
-            # scp @($scpParams.Options) @($scpParams.Sources) @($scpParams.Target)
+            # 執行scp命令 (目前註解掉)
+            # scp @($scpParams.Options) @($scpParams.Sources) $scpParams.Target
             
         } else {
+            # 一對一傳輸的情況
             for ($i = 0; $i -lt $source.Count; $i++) {
-                # 創建新的有序字典而不是使用Clone
-                $newOptions = [ordered]@{}
-                $scpOptions.GetEnumerator() | ForEach-Object { $newOptions[$_.Key] = $_.Value }
-                
                 $scpParams = [ordered]@{
-                    Options = @($newOptions.GetEnumerator() | ForEach-Object { "-o$($_.Key)=$($_.Value)" })
+                    Options = $optionsArray
                     Source  = $source[$i]
                     Target  = $target[$i]
                 }
@@ -86,8 +82,8 @@ function ScpExecutor {
                 $scpCommand = "scp $($scpParams.Options -join ' ') $($scpParams.Source) $($scpParams.Target)"
                 Write-Output $scpCommand
                 
-                # 執行scp命令
-                # scp @($scpParams.Options) @($scpParams.Source) @($scpParams.Target)
+                # 執行scp命令 (目前註解掉)
+                # scp @($scpParams.Options) $scpParams.Source $scpParams.Target
             }
         }
     }
