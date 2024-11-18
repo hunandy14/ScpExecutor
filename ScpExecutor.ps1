@@ -20,12 +20,28 @@ function ScpExecutor {
     $sevr = (ConvertFrom-Yaml -Ordered ((Get-Content $ServerConfigPath) -join "`n")).$ServerConfigName
     if ($null -eq $sevr) { throw "在設定檔中找不到指定的伺服器: $ServerConfigName" }
 
-    # 讀取任務設定
+    # 讀取任務設定並預處理路徑
     $task = $TaskName | ForEach-Object {
         $taskConfig = (ConvertFrom-Yaml -Ordered ((Get-Content $TaskPath) -join "`n")).$_
         if ($null -eq $taskConfig) { throw "在任務設定檔中找不到指定的任務: $_" }
+        
+        # 預處理路徑
+        $taskConfig.local = @($taskConfig.local -split "`n" | ForEach-Object { $_.TrimEnd() } | Where-Object { $_ })
+        $taskConfig.remote = @($taskConfig.remote -split "`n" | ForEach-Object { $_.TrimEnd() } | Where-Object { $_ })
+        
+        # 預處理所有遠端路徑，無論是 get 還是 put 模式
+        if ($taskConfig.remote.Count -eq 1) {
+            # 單一目標目錄
+            $taskConfig.remote = @("$($sevr.user)@$($sevr.host):$($taskConfig.remote[0])")
+        } else {
+            # 多個目標路徑
+            $taskConfig.remote = $taskConfig.remote | ForEach-Object { "$($sevr.user)@$($sevr.host):$_" }
+        }
+        
         $taskConfig
     }
+    
+    Write-Host $($task | ConvertTo-Json -Depth 10)
     
     # 建構 SCP 基本選項
     $scpOptions = $sevr.option.GetEnumerator() | ForEach-Object {
@@ -36,45 +52,27 @@ function ScpExecutor {
     foreach ($t in $task) {
         switch ($t.mode) {
             'put' {
-                $source = $t.local
-                $target = $t.remote
-            }
-            'get' {
-                $source = $t.remote
-                $target = $t.local
-            }
-        }
-        
-        switch ($t.mode) {
-            'put' {
-                # 處理來源檔案路徑
-                $sourcePath = $source -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-                if ($target -notmatch "`n") {
-                    $targetPath = "$($sevr.user)@$($sevr.host):$($target.Trim())"
-                    $scpCommand = "scp $scpOptions $($sourcePath -join ' ') $targetPath"
+                if ($t.remote.Count -eq 1) {
+                    # 單一目標目錄
+                    $scpCommand = "scp $scpOptions $($t.local -join ' ') $($t.remote[0])"
                     Write-Output $scpCommand
                 } else {
-                    $targetPath = $target -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-                    for ($i = 0; $i -lt $sourcePath.Count; $i++) {
-                        $target = "$($sevr.user)@$($sevr.host):$($targetPath[$i])"
-                        $scpCommand = "scp $scpOptions $($sourcePath[$i]) $target"
+                    # 多個目標路徑
+                    for ($i = 0; $i -lt $t.local.Count; $i++) {
+                        $scpCommand = "scp $scpOptions $($t.local[$i]) $($t.remote[$i])"
                         Write-Output $scpCommand
                     }
                 }
             }
             'get' {
-                # 處理來源檔案路徑
-                $sourcePath = $source -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-                if ($target -notmatch "`n") {
-                    $sourcePath = @($sourcePath) | ForEach-Object { "$($sevr.user)@$($sevr.host):$_" }
-                    $targetPath = $target.Trim()
-                    $scpCommand = "scp $scpOptions $($sourcePath -join ' ') $targetPath"
+                if ($t.local.Count -eq 1) {
+                    # 單一目標目錄
+                    $scpCommand = "scp $scpOptions $($t.remote -join ' ') $($t.local[0])"
                     Write-Output $scpCommand
                 } else {
-                    $targetPath = $target -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-                    for ($i = 0; $i -lt $sourcePath.Count; $i++) {
-                        $source = "$($sevr.user)@$($sevr.host):$($sourcePath[$i])"
-                        $scpCommand = "scp $scpOptions $source $($targetPath[$i])"
+                    # 多個目標路徑
+                    for ($i = 0; $i -lt $t.remote.Count; $i++) {
+                        $scpCommand = "scp $scpOptions $($t.remote[$i]) $($t.local[$i])"
                         Write-Output $scpCommand
                     }
                 }
