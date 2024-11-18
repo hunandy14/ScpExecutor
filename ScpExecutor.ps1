@@ -60,16 +60,21 @@ function ScpExecutor {
             Write-Output $scpCommand
             
             # 執行scp命令 (目前註解掉)
-            scp $optionsArray $source $target
+            # scp $optionsArray $source $target
             
         } else { # 一對一傳輸的情況
             for ($i = 0; $i -lt $source.Count; $i++) {
+                # 檢查來源和目標是否都存在
+                if ($null -eq $source[$i] -or $null -eq $target[$i]) {
+                    throw "來源或目標不完整: 來源=$($source[$i]), 目標=$($target[$i])"
+                }
+                
                 # 輸出scp命令
                 $scpCommand = "scp $($optionsArray -join ' ') $($source[$i]) $($target[$i])"
                 Write-Output $scpCommand
                 
                 # 執行scp命令 (目前註解掉)
-                scp $optionsArray $source[$i] $target[$i]
+                # scp $optionsArray $source[$i] $target[$i]
             }
         }
     }
@@ -88,7 +93,6 @@ scp -oIdentityFile=C:/Users/hunan/.ssh/id_ed25519 -oBatchMode=yes local_dir2/Fil
 
 # 執行 SCP 命令並比對結果
 $results = ScpExecutor RedHat79 Task1 Task2 Task3 Task4
-
 
 # 比對實際輸出與預期結果
 for ($i = 0; $i -lt $results.Count; $i++) {
