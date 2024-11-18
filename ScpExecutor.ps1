@@ -54,36 +54,22 @@ function ScpExecutor {
         # 建立基本選項陣列
         $optionsArray = @($scpOptions.GetEnumerator() | ForEach-Object { "-o$($_.Key)=$($_.Value)" })
         
-        if ($target.Count -eq 1) {
-            # 多來源到單一目標的情況
-            $scpParams = [ordered]@{
-                Options = $optionsArray
-                Sources = $source
-                Target  = $target[0]
-            }
-            
+        if ($target.Count -eq 1) { # 多來源到單一目標的情況
             # 輸出scp命令
-            $scpCommand = "scp $($scpParams.Options -join ' ') $($scpParams.Sources -join ' ') $($scpParams.Target)"
+            $scpCommand = "scp $($optionsArray -join ' ') $($source -join ' ') $($target)"
             Write-Output $scpCommand
             
             # 執行scp命令 (目前註解掉)
-            # scp @($scpParams.Options) @($scpParams.Sources) $scpParams.Target
+            scp $optionsArray $source $target
             
-        } else {
-            # 一對一傳輸的情況
+        } else { # 一對一傳輸的情況
             for ($i = 0; $i -lt $source.Count; $i++) {
-                $scpParams = [ordered]@{
-                    Options = $optionsArray
-                    Source  = $source[$i]
-                    Target  = $target[$i]
-                }
-                
                 # 輸出scp命令
-                $scpCommand = "scp $($scpParams.Options -join ' ') $($scpParams.Source) $($scpParams.Target)"
+                $scpCommand = "scp $($optionsArray -join ' ') $($source[$i]) $($target[$i])"
                 Write-Output $scpCommand
                 
                 # 執行scp命令 (目前註解掉)
-                # scp @($scpParams.Options) $scpParams.Source $scpParams.Target
+                scp $optionsArray $source[$i] $target[$i]
             }
         }
     }
