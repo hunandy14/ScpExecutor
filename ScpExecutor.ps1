@@ -84,7 +84,7 @@ function ScpExecutor {
         [Parameter(Position = 1, Mandatory, ValueFromRemainingArguments)]
         [string[]]$TaskName,
         [string]$ServerConfigPath = 'serverConfig.yaml',
-        [string]$TaskConfigPath = 'task.yaml'
+        [string]$TaskConfigPath = 'taskConfig.yaml'
     )
     
     # 同步 .Net 環境工作目錄

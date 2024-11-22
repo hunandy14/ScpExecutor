@@ -2,26 +2,17 @@
 
 ## 概述
 
-`ScpExecutor` 是一個 PowerShell 腳本，用於在本地和遠端伺服器之間執行安全文件傳輸（SCP）操作。此腳本使用 YAML 配置檔案來定義伺服器資訊（`serverConfig.yaml`）和任務定義（`task.yaml`），幫助自動化基於預定義任務的文件傳輸，例如上傳或下載文件或目錄。
+`ScpExecutor` 是一個 PowerShell 腳本，用於在本地和遠端伺服器之間執行安全文件傳輸（SCP）操作。此腳本使用 YAML 配置檔案來定義伺服器資訊（`serverConfig.yaml`）和任務定義（`taskConfig.yaml`），幫助自動化基於預定義任務的文件傳輸，例如上傳或下載文件或目錄。
 
 ## 系統需求
 
 - PowerShell 5.1 或更高版本
 - 必須安裝並能夠訪問 OpenSSH 客戶端
-- 用於伺服器配置（`serverConfig.yaml`）和任務（`task.yaml`）的 YAML 檔案
+- 用於伺服器配置（`serverConfig.yaml`）和任務（`taskConfig.yaml`）的 YAML 檔案
 
 ## 文件說明
 
-### 1. ScpExecutor.ps1
-
-這個 PowerShell 腳本提供了一個名為 `ScpExecutor` 的函數，其別名為 `scpx`。函數參數包括：
-
-- **ServerNodeName**: 要使用的伺服器配置名稱（必填）。
-- **TaskName**: 要執行的任務名稱，這些任務定義在 `task.yaml` 中（必填）。
-- **ServerConfigPath**: 伺服器配置 YAML 檔案的路徑，預設為 `serverConfig.yaml`。
-- **TaskConfigPath**: 任務 YAML 檔案的路徑，預設為 `task.yaml`。
-
-### 2. serverConfig.yaml
+### 1. serverConfig.yaml
 
 此檔案包含遠端伺服器的配置資訊。範例：
 
@@ -42,7 +33,7 @@ MyServer:
 - **option**: 額外的 SSH 選項，例如身份檔案。
 - **log**: SCP 操作的日誌檔案存儲路徑。
 
-### 3. task.yaml
+### 2. taskConfig.yaml
 
 此檔案定義了文件傳輸任務。範例：
 
@@ -68,7 +59,7 @@ task2:
 - **local**: 本地要傳輸的文件或目錄。
 - **remote**: SCP 操作的遠端文件或目錄。
 
-此外，在 local 與 remote 的多對多設置下，`ScpExecutor` 會1對1的將每個文件使用獨立的對話傳輸。
+在 local 與 remote 的多對多設置下，`ScpExecutor` 會1對1的將每個文件使用獨立的對話傳輸。
 
 ```yaml
 task4:
@@ -87,6 +78,15 @@ task4:
 
 > 確保 local 與 remote 的數量是對等的，否則會引發錯誤
 
+### 3. ScpExecutor.ps1
+
+這個 PowerShell 腳本提供了一個名為 `ScpExecutor` 的函數，其別名為 `scpx`。函數參數包括：
+
+- **ServerNodeName**: 要使用的伺服器配置名稱（必填）。
+- **TaskName**: 要執行的任務名稱，這些任務定義在 `taskConfig.yaml` 中（必填）。
+- **ServerConfigPath**: 伺服器配置 YAML 檔案的路徑，預設為 `serverConfig.yaml`。
+- **TaskConfigPath**: 任務 YAML 檔案的路徑，預設為 `taskConfig.yaml`。
+
 ## 使用方式
 
 要使用 `ScpExecutor` 函數，請執行以下命令：
@@ -95,14 +95,14 @@ task4:
 ScpExecutor -ServerNodeName 'MyServer' -TaskName 'task1'
 ```
 
-> 該命令將使用名為 `MyServer` 的伺服器配置，來執行 `task.yaml` 中定義的任務 `task1`。
+> 該命令將使用名為 `MyServer` 的伺服器配置，來執行 `taskConfig.yaml` 中定義的任務 `task1`。
 
 
 
 ### 參數
 
 - **ServerNodeName**: 指定要用於操作的伺服器配置。
-- **TaskName**: 一個或多個對應於 `task.yaml` 檔案中的任務名稱。
+- **TaskName**: 一個或多個對應於 `taskConfig.yaml` 檔案中的任務名稱。
 - **ServerConfigPath**（可選）: 自訂伺服器配置 YAML 檔案的路徑。
 - **TaskConfigPath**（可選）: 自訂任務 YAML 檔案的路徑。
 
@@ -112,4 +112,4 @@ ScpExecutor -ServerNodeName 'MyServer' -TaskName 'task1'
 ScpExecutor -ServerNodeName 'MyServer' -TaskName 'task1','task2'
 ```
 
-此範例將會執行兩個任務 `task1` 和 `task2`，根據 `task.yaml` 中的設定上傳或下載相應的文件。
+此範例將會執行兩個任務 `task1` 和 `task2`，根據 `taskConfig.yaml` 中的設定上傳或下載相應的文件。
