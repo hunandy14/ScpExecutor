@@ -1,3 +1,19 @@
+# 建構Task任務
+function Initialize-Task($TaskConfig, $Server) {
+    # 處理路徑
+    $TaskConfig.local = @($TaskConfig.local -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    $TaskConfig.remote = @($TaskConfig.remote -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    
+    # 加入使用者和主機資訊到遠端路徑
+    if ($TaskConfig.remote.Count -eq 1) {
+        $TaskConfig.remote = @("$($Server.user)@$($Server.host):$($TaskConfig.remote[0])")
+    } else {
+        $TaskConfig.remote = $TaskConfig.remote | ForEach-Object { "$($Server.user)@$($Server.host):$_" }
+    }
+    
+    return $TaskConfig
+}
+
 # 執行SCP命令
 function Invoke-ScpCommand($Options, $Source, $Target) {
     if ($null -eq $Source -or $null -eq $Target) {
@@ -35,6 +51,8 @@ function Invoke-ScpTasks($Tasks, $Options) {
     }
 }
 
+
+
 # SCP執行器
 function ScpExecutor {
     [CmdletBinding(SupportsShouldProcess)] [Alias("scpx")]
@@ -49,39 +67,22 @@ function ScpExecutor {
     
     # 同步 .Net 環境工作目錄
     [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
-    $ServerConfigPath = [System.IO.Path]::GetFullPath($ServerConfigPath)
-    $TaskPath = [System.IO.Path]::GetFullPath($TaskPath)
+    $ServerConfigPath = [IO.Path]::GetFullPath($ServerConfigPath)
+    $TaskPath = [IO.Path]::GetFullPath($TaskPath)
     
-    # 讀取伺服器設定
-    if (-not (Test-Path $ServerConfigPath)) { throw "Server config file not found: $ServerConfigPath" }
+    # 讀取伺服器設定並建構Options
     if (-not (Test-Path $TaskPath)) { throw "Task config file not found: $TaskPath" }
-    $server = (ConvertFrom-Yaml -Ordered ((Get-Content $ServerConfigPath) -join "`n")).$ServerNodeName
-    if ($null -eq $server) { throw "Specified server not found in config: $ServerNodeName" }
-
-    # 讀取任務設定並預處理路徑
-    $taskConfigs = ConvertFrom-Yaml -Ordered ((Get-Content $TaskPath) -join "`n")
-    $task = $TaskName | ForEach-Object {
-        $taskConfig = $taskConfigs.$_
-        if ($null -eq $taskConfig) { throw "Specified task not found in task config: $_" }
-        
-        # 預處理路徑
-        $taskConfig.local = @($taskConfig.local -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-        $taskConfig.remote = @($taskConfig.remote -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-        
-        # 預處理所有遠端路徑，無論是 get 還是 put 模式
-        if ($taskConfig.remote.Count -eq 1) {
-            $taskConfig.remote = @("$($server.user)@$($server.host):$($taskConfig.remote[0])")
-        } else {
-            $taskConfig.remote = $taskConfig.remote | ForEach-Object { "$($server.user)@$($server.host):$_" }
-        }
-        
-        $taskConfig
-    }
+    $servConf = (ConvertFrom-Yaml -Ordered ((Get-Content $ServerConfigPath -EA Stop) -join "`n")).$ServerNodeName
+    if (-not $servConf) { throw "Specified server not found in config: $ServerNodeName" }
+    $opts = [ordered]@{}; $servConf.option.GetEnumerator() | ForEach-Object { $opts[$_.Key] = $_.Value }
     
-    # 建構 SCP 基本選項
-    $opts = [ordered]@{}
-    $server.option.GetEnumerator() | ForEach-Object {
-        $opts[$_.Key] = $_.Value
+    # 讀取任務設定並建構任務
+    if (-not (Test-Path $ServerConfigPath)) { throw "Server config file not found: $ServerConfigPath" }
+    $taskYaml = ConvertFrom-Yaml -Ordered ((Get-Content $TaskPath -EA Stop) -join "`n")
+    $task = $TaskName | ForEach-Object {
+        $taskConf = $taskYaml.$_
+        if (-not $taskConf) { throw "Specified task not found in task config: $_" }
+        Initialize-Task -TaskConfig $taskConf -Server $servConf
     }
     
     # 執行所有SCP任務
