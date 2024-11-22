@@ -68,6 +68,25 @@ task2:
 - **local**: 本地要傳輸的文件或目錄。
 - **remote**: SCP 操作的遠端文件或目錄。
 
+此外，在 local 與 remote 的多對多設置下，`ScpExecutor` 會1對1的將每個文件使用獨立的對話傳輸。
+
+```yaml
+task4:
+  mode: put
+  local: |-
+    local_dir1/File1.txt
+    local_dir2/File2.txt
+  remote: |-
+    ~/remote_dir1/File1.txt
+    ~/remote_dir2/File2.txt
+```
+
+- **mode**: `put` 表示上傳文件。
+- **local**: 要傳輸的多個本地文件。
+- **remote**: 每個本地文件對應的遠端位置。
+
+> 確保 local 與 remote 的數量是對等的，否則會引發錯誤
+
 ## 使用方式
 
 要使用 `ScpExecutor` 函數，請執行以下命令：
