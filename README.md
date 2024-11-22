@@ -19,7 +19,7 @@
 - **ServerNodeName**: 要使用的伺服器配置名稱（必填）。
 - **TaskName**: 要執行的任務名稱，這些任務定義在 `task.yaml` 中（必填）。
 - **ServerConfigPath**: 伺服器配置 YAML 檔案的路徑，預設為 `serverConfig.yaml`。
-- **TaskPath**: 任務 YAML 檔案的路徑，預設為 `task.yaml`。
+- **TaskConfigPath**: 任務 YAML 檔案的路徑，預設為 `task.yaml`。
 
 ### 2. serverConfig.yaml
 
@@ -104,7 +104,7 @@ ScpExecutor -ServerNodeName 'MyServer' -TaskName 'task1'
 - **ServerNodeName**: 指定要用於操作的伺服器配置。
 - **TaskName**: 一個或多個對應於 `task.yaml` 檔案中的任務名稱。
 - **ServerConfigPath**（可選）: 自訂伺服器配置 YAML 檔案的路徑。
-- **TaskPath**（可選）: 自訂任務 YAML 檔案的路徑。
+- **TaskConfigPath**（可選）: 自訂任務 YAML 檔案的路徑。
 
 此外，`TaskName` 參數也可以接受多個任務名稱，以便一次執行多個任務
 

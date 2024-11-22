@@ -75,30 +75,30 @@ function ScpExecutor {
         [Parameter(Position = 1, Mandatory, ValueFromRemainingArguments)]
         [string[]]$TaskName,
         [string]$ServerConfigPath = 'serverConfig.yaml',
-        [string]$TaskPath = 'task.yaml'
+        [string]$TaskConfigPath = 'task.yaml'
     )
     
     # 同步 .Net 環境工作目錄
     [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
     $ServerConfigPath = [IO.Path]::GetFullPath($ServerConfigPath)
-    $TaskPath = [IO.Path]::GetFullPath($TaskPath)
+    $TaskConfigPath = [IO.Path]::GetFullPath($TaskConfigPath)
     
     # 讀取伺服器設定並建構Options
-    if (-not (Test-Path $TaskPath)) { throw "Task config file not found: $TaskPath" }
+    if (-not (Test-Path $ServerConfigPath)) { throw "Server config file not found: $ServerConfigPath" }
     $servConf = (ConvertFrom-Yaml -Ordered ((Get-Content $ServerConfigPath -EA Stop) -join "`n")).$ServerNodeName
     if (-not $servConf) { throw "Specified server not found in config: $ServerNodeName" }
     $opts = Initialize-Options -ServerConfig $servConf
     
     # 讀取任務設定並建構Task
-    if (-not (Test-Path $ServerConfigPath)) { throw "Server config file not found: $ServerConfigPath" }
-    $taskYaml = ConvertFrom-Yaml -Ordered ((Get-Content $TaskPath -EA Stop) -join "`n")
-    $task = $TaskName | ForEach-Object {
+    if (-not (Test-Path $TaskConfigPath)) { throw "Task config file not found: $TaskConfigPath" }
+    $taskYaml = ConvertFrom-Yaml -Ordered ((Get-Content $TaskConfigPath -EA Stop) -join "`n")
+    $tasks = $TaskName | ForEach-Object {
         $taskConf = $taskYaml.$_
         if (-not $taskConf) { throw "Specified task not found in task config: $_" }
         Initialize-Task -TaskConfig $taskConf -Server $servConf
     }
     
     # 執行所有SCP任務
-    Invoke-ScpTasks -Tasks $task -Options $opts
+    Invoke-ScpTasks -Tasks $tasks -Options $opts
 
 } # ScpExecutor RedHat79 Task1 -WhatIf
