@@ -1,5 +1,5 @@
 function ScpExecutor {
-    [CmdletBinding()] [Alias("scpx")]
+    [CmdletBinding(SupportsShouldProcess)] [Alias("scpx")]
     Param(
         [Parameter(Position = 0, Mandatory)]
         [string]$ServerConfigName,
@@ -59,8 +59,10 @@ function ScpExecutor {
             $scpCommand = "scp $($optionsArray -join ' ') $($source -join ' ') $($target)"
             Write-Output $scpCommand
             
-            # 執行scp命令 (目前註解掉)
-            # scp $optionsArray $source $target
+            # 執行scp命令
+            if ($PSCmdlet.ShouldProcess($scpCommand, "Execute SCP command")) {
+                scp $optionsArray $source $target
+            }
             
         } else { # 一對一傳輸的情況
             for ($i = 0; $i -lt $source.Count; $i++) {
@@ -73,34 +75,11 @@ function ScpExecutor {
                 $scpCommand = "scp $($optionsArray -join ' ') $($source[$i]) $($target[$i])"
                 Write-Output $scpCommand
                 
-                # 執行scp命令 (目前註解掉)
-                # scp $optionsArray $source[$i] $target[$i]
+                # 執行scp命令
+                if ($PSCmdlet.ShouldProcess($scpCommand, "Execute SCP command")) {
+                    scp $optionsArray $source[$i] $target[$i]
+                }
             }
         }
     }
 }
-
-
-
-$testStr = @"
-scp -oIdentityFile=C:/Users/hunan/.ssh/id_ed25519 -oBatchMode=yes local_dir1/File1.txt local_dir2/File2.txt chg@192.168.3.53:~/remote_dir/
-scp -oIdentityFile=C:/Users/hunan/.ssh/id_ed25519 -oBatchMode=yes chg@192.168.3.53:~/remote_dir1/File1.txt chg@192.168.3.53:~/remote_dir2/File2.txt local_dir/
-scp -oIdentityFile=C:/Users/hunan/.ssh/id_ed25519 -oBatchMode=yes chg@192.168.3.53:~/remote_dir1/File1.txt local_dir1/File1.txt
-scp -oIdentityFile=C:/Users/hunan/.ssh/id_ed25519 -oBatchMode=yes chg@192.168.3.53:~/remote_dir2/File2.txt local_dir2/File2.txt
-scp -oIdentityFile=C:/Users/hunan/.ssh/id_ed25519 -oBatchMode=yes local_dir1/File1.txt chg@192.168.3.53:~/remote_dir1/File1.txt
-scp -oIdentityFile=C:/Users/hunan/.ssh/id_ed25519 -oBatchMode=yes local_dir2/File2.txt chg@192.168.3.53:~/remote_dir2/File2.txt
-"@ -split "`n" 
-
-# 執行 SCP 命令並比對結果
-$results = ScpExecutor RedHat79 Task1 Task2 Task3 Task4
-
-# 比對實際輸出與預期結果
-for ($i = 0; $i -lt $results.Count; $i++) {
-    $isMatch = $results[$i] -eq $testStr[$i]
-    $color = if ($isMatch) { 'Green' } else { 'Red' }
-    
-    if (-not $isMatch) { Write-Host "預期結果: " -NoNewline -ForegroundColor DarkGray; Write-Host $testStr[$i] -ForegroundColor DarkGray }
-    Write-Host "實際結果: " -NoNewline -ForegroundColor DarkGray
-    Write-Host $results[$i] -ForegroundColor $color
-}
-
