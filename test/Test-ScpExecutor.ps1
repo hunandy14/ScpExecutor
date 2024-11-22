@@ -15,19 +15,19 @@ scp -oIdentityFile=C:/Users/hunan/.ssh/id_ed25519 -oBatchMode=yes local_dir2/Fil
     }
 
     It '測試 Task1: 本地檔案上傳到遠端' {
-        $result = ScpExecutor RedHat79 Task1 -WhatIf 6>&1
+        $result = ScpExecutor -ServerNodeName RedHat79 Task1 -WhatIf 6>&1
         $actualCommand = $result -replace "WhatIf: ", ""
         $actualCommand | Should -Be $expectedCommands[0]
     }
 
     It '測試 Task2: 遠端檔案複製到另一個遠端位置' {
-        $result = ScpExecutor RedHat79 Task2 -WhatIf 6>&1
+        $result = ScpExecutor -ServerNodeName RedHat79 Task2 -WhatIf 6>&1
         $actualCommand = $result -replace "WhatIf: ", ""
         $actualCommand | Should -Be $expectedCommands[1]
     }
 
     It '測試 Task3: 從遠端下載檔案到本地' {
-        $results = ScpExecutor RedHat79 Task3 -WhatIf 6>&1
+        $results = ScpExecutor -ServerNodeName RedHat79 Task3 -WhatIf 6>&1
         $results.Count | Should -Be 2
         
         for ($i = 0; $i -lt $results.Count; $i++) {
@@ -37,7 +37,7 @@ scp -oIdentityFile=C:/Users/hunan/.ssh/id_ed25519 -oBatchMode=yes local_dir2/Fil
     }
 
     It '測試 Task4: 從本地上傳檔案到遠端' {
-        $results = ScpExecutor RedHat79 Task4 -WhatIf 6>&1
+        $results = ScpExecutor -ServerNodeName RedHat79 Task4 -WhatIf 6>&1
         $results.Count | Should -Be 2
         
         for ($i = 0; $i -lt $results.Count; $i++) {
@@ -48,7 +48,7 @@ scp -oIdentityFile=C:/Users/hunan/.ssh/id_ed25519 -oBatchMode=yes local_dir2/Fil
 
     It '測試 Task1, Task2, Task3, Task4: 統合一起是否能正確執行' {
         # 執行 SCP 命令並獲取 WhatIf 輸出
-        $results = ScpExecutor RedHat79 Task1 Task2 Task3 Task4 -WhatIf 6>&1
+        $results = ScpExecutor -ServerNodeName RedHat79 -TaskName Task1,Task2,Task3,Task4 -WhatIf 6>&1
         
         # 驗證結果數量
         $results.Count | Should -Be $expectedCommands.Count

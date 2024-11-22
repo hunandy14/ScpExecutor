@@ -2,7 +2,7 @@ function ScpExecutor {
     [CmdletBinding(SupportsShouldProcess)] [Alias("scpx")]
     Param(
         [Parameter(Position = 0, Mandatory)]
-        [string]$ServerConfigName,
+        [string]$ServerNodeName,
         [Parameter(Position = 1, Mandatory, ValueFromRemainingArguments)]
         [string[]]$TaskName,
         [string]$ServerConfigPath = 'serverConfig.yaml',
@@ -17,8 +17,8 @@ function ScpExecutor {
     # 讀取伺服器設定
     if (-not (Test-Path $ServerConfigPath)) { throw "Server config file not found: $ServerConfigPath" }
     if (-not (Test-Path $TaskPath)) { throw "Task config file not found: $TaskPath" }
-    $server = (ConvertFrom-Yaml -Ordered ((Get-Content $ServerConfigPath) -join "`n")).$ServerConfigName
-    if ($null -eq $server) { throw "Specified server not found in config: $ServerConfigName" }
+    $server = (ConvertFrom-Yaml -Ordered ((Get-Content $ServerConfigPath) -join "`n")).$ServerNodeName
+    if ($null -eq $server) { throw "Specified server not found in config: $ServerNodeName" }
 
     # 讀取任務設定並預處理路徑
     $task = $TaskName | ForEach-Object {
