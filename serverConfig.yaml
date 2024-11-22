@@ -3,6 +3,6 @@ RedHat79:
   host: 192.168.3.53
   port: 22
   option:
-    IdentityFile: C:/Users/hunan/.ssh/id_ed25519
+    IdentityFile: ~/.ssh/id_ed25519
     BatchMode: yes
   log: ./logs/ScpExecutor.log

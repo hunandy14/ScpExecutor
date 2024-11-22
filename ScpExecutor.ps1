@@ -1,3 +1,16 @@
+# 建構Option選項
+function Initialize-Options($ServerConfig) {
+    $opts = [ordered]@{}
+    $ServerConfig.option.GetEnumerator() | ForEach-Object {
+        if ($IsWindows -and $_.Value -match '^~[/\\]') {
+            $_.Value = $_.Value -replace('^~', ($env:USERPROFILE).Replace('\', '/'))
+        }
+        $opts[$_.Key] = $_.Value
+        # Write-Host "Option: $($_.Key) = $($_.Value)" -ForegroundColor Yellow
+    }
+    return $opts
+}
+
 # 建構Task任務
 function Initialize-Task($TaskConfig, $Server) {
     # 處理路徑
@@ -74,9 +87,9 @@ function ScpExecutor {
     if (-not (Test-Path $TaskPath)) { throw "Task config file not found: $TaskPath" }
     $servConf = (ConvertFrom-Yaml -Ordered ((Get-Content $ServerConfigPath -EA Stop) -join "`n")).$ServerNodeName
     if (-not $servConf) { throw "Specified server not found in config: $ServerNodeName" }
-    $opts = [ordered]@{}; $servConf.option.GetEnumerator() | ForEach-Object { $opts[$_.Key] = $_.Value }
+    $opts = Initialize-Options -ServerConfig $servConf
     
-    # 讀取任務設定並建構任務
+    # 讀取任務設定並建構Task
     if (-not (Test-Path $ServerConfigPath)) { throw "Server config file not found: $ServerConfigPath" }
     $taskYaml = ConvertFrom-Yaml -Ordered ((Get-Content $TaskPath -EA Stop) -join "`n")
     $task = $TaskName | ForEach-Object {
