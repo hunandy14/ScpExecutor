@@ -31,7 +31,7 @@ MyServer:
   host: 192.168.1.1
   port: 22
   option:
-    IdentityFile: C:/Users/your_user/.ssh/id_ed25519
+    IdentityFile: ~/.ssh/id_ed25519
     BatchMode: yes
   log: ./logs/ScpExecutor.log
 ```
@@ -81,7 +81,7 @@ task4:
     ~/remote_dir2/File2.txt
 ```
 
-- **mode**: `put` 表示上傳文件。
+- **mode**: `put` 表示上傳文件，`get` 表示下載文件。
 - **local**: 要傳輸的多個本地文件。
 - **remote**: 每個本地文件對應的遠端位置。
 
@@ -109,7 +109,7 @@ ScpExecutor -ServerNodeName 'MyServer' -TaskName 'task1'
 此外，`TaskName` 參數也可以接受多個任務名稱，以便一次執行多個任務
 
 ```powershell
-ScpExecutor -ServerNodeName 'MyServer' -TaskName 'task1' 'task2'
+ScpExecutor -ServerNodeName 'MyServer' -TaskName 'task1','task2'
 ```
 
 此範例將會執行兩個任務 `task1` 和 `task2`，根據 `task.yaml` 中的設定上傳或下載相應的文件。
