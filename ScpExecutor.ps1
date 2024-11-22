@@ -45,6 +45,17 @@ function ScpExecutor {
         $scpOptions[$_.Key] = $_.Value
     }
     
+    # 新增輔助函數來處理 SCP 命令執行
+    function Invoke-ScpCommand {
+        param($Options, $Source, $Target)
+        if ($WhatIfPreference) {
+            $scpCommand = "scp $($Options -join ' ') $Source $Target"
+            Write-Host "WhatIf: $scpCommand" -ForegroundColor DarkCyan
+        } else {
+            scp $Options $Source $Target
+        }
+    }
+    
     # 處理每個任務
     foreach ($t in $task) {
         # 根據模式決定源和目標
@@ -54,24 +65,14 @@ function ScpExecutor {
         # 建立基本選項陣列
         $optionsArray = @($scpOptions.GetEnumerator() | ForEach-Object { "-o$($_.Key)=$($_.Value)" })
         
-        if ($target.Count -eq 1) { # 多來源到單一目標的情況
-            if ($WhatIfPreference) {
-                $scpCommand = "scp $($optionsArray -join ' ') $($source -join ' ') $($target)"
-                Write-Host "WhatIf: $scpCommand" -ForegroundColor DarkCyan
-            } else {
-                scp $optionsArray $source $target
-            }
-        } else { # 多來源到多目標的情況
+        if ($target.Count -eq 1) {
+            Invoke-ScpCommand -Options $optionsArray -Source ($source -join ' ') -Target $target
+        } else {
             for ($i = 0; $i -lt $source.Count; $i++) {
                 if ($null -eq $source[$i] -or $null -eq $target[$i]) {
                     throw "Source or target incomplete: Source=$($source[$i]), Target=$($target[$i])"
                 }
-                if ($WhatIfPreference) {
-                    $scpCommand = "scp $($optionsArray -join ' ') $($source[$i]) $($target[$i])"
-                    Write-Host "WhatIf: $scpCommand" -ForegroundColor DarkCyan
-                } else {
-                    scp $optionsArray $source[$i] $target[$i]
-                }
+                Invoke-ScpCommand -Options $optionsArray -Source $source[$i] -Target $target[$i]
             }
         }
     }
