@@ -48,8 +48,8 @@ function ScpExecutor {
     # 新增輔助函數來處理 SCP 命令執行
     function Invoke-ScpCommand {
         param($Options, $Source, $Target)
-        if ($null -eq $source -or $null -eq $target) {
-            throw "Source or target incomplete: Source=$($source), Target=$($target)"
+        if ($null -eq $Source -or $null -eq $Target) {
+            throw "Source or target incomplete: Source=$($Source), Target=$($Target)"
         }
         if ($WhatIfPreference) {
             $scpCommand = "scp $($Options -join ' ') $Source $Target"
@@ -62,19 +62,22 @@ function ScpExecutor {
     # 處理每個任務
     foreach ($t in $task) {
         # 根據模式決定源和目標
-        $source = if ($t.mode -eq 'put') { $t.local } else { $t.remote }
-        $target = if ($t.mode -eq 'put') { $t.remote } else { $t.local }
+        $source = @(if ($t.mode -eq 'put') { $t.local } else { $t.remote })
+        $target = @(if ($t.mode -eq 'put') { $t.remote } else { $t.local })
         
         # 建立基本選項陣列
-        $optionsArray = @($scpOptions.GetEnumerator() | ForEach-Object { "-o$($_.Key)=$($_.Value)" })
+        $options = @($scpOptions.GetEnumerator() | ForEach-Object { "-o$($_.Key)=$($_.Value)" })
+        
+        # 預處理源和檢查目標數量是否相等
+        if ($target.Count -eq 1) {
+            $source = @(,$source)
+        } elseif ($source.Count -ne $target.Count) {
+            throw "Source and target count mismatch: Source=$($source.Count), Target=$($target.Count)"
+        }
         
         # 執行 SCP 命令
-        if ($target.Count -eq 1) {
-            Invoke-ScpCommand -Options $optionsArray -Source @($source) -Target $target
-        } else {
-            for ($i = 0; $i -lt $source.Count; $i++) {
-                Invoke-ScpCommand -Options $optionsArray -Source $source[$i] -Target $target[$i]
-            }
+        for ($i = 0; $i -lt $source.Count; $i++) {
+            Invoke-ScpCommand -Options $options -Source $source[$i] -Target $target[$i]
         }
     }
 } # ScpExecutor RedHat79 Task1 -WhatIf
