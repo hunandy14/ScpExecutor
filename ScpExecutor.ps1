@@ -1,3 +1,41 @@
+# 執行SCP命令
+function Invoke-ScpCommand($Options, $Source, $Target) {
+    if ($null -eq $Source -or $null -eq $Target) {
+        throw "Source or target incomplete: Source=$($Source), Target=$($Target)"
+    }
+    if ($WhatIfPreference) {
+        $scpCommand = "scp $($Options -join ' ') $Source $Target"
+        Write-Host "WhatIf: $scpCommand" -ForegroundColor DarkCyan
+    } else {
+        scp $Options $Source $Target
+    }
+}
+
+# 執行所有SCP任務
+function Invoke-ScpTasks($Tasks, $Options) {
+    foreach ($t in $Tasks) {
+        # 根據模式決定源和目標
+        $source = @(if ($t.mode -eq 'put') { $t.local } else { $t.remote })
+        $target = @(if ($t.mode -eq 'put') { $t.remote } else { $t.local })
+        
+        # 建立基本選項陣列
+        $opts = @($Options.GetEnumerator() | ForEach-Object { "-o$($_.Key)=$($_.Value)" })
+        
+        # 預處理源和檢查目標數量是否相等
+        if ($target.Count -eq 1) {
+            $source = @(,$source)
+        } elseif ($source.Count -ne $target.Count) {
+            throw "Source and target count mismatch: Source=$($source.Count), Target=$($target.Count)"
+        }
+        
+        # 執行 SCP 命令
+        for ($i = 0; $i -lt $source.Count; $i++) {
+            Invoke-ScpCommand -Options $opts -Source $source[$i] -Target $target[$i]
+        }
+    }
+}
+
+# SCP執行器
 function ScpExecutor {
     [CmdletBinding(SupportsShouldProcess)] [Alias("scpx")]
     Param(
@@ -21,13 +59,14 @@ function ScpExecutor {
     if ($null -eq $server) { throw "Specified server not found in config: $ServerNodeName" }
 
     # 讀取任務設定並預處理路徑
+    $taskConfigs = ConvertFrom-Yaml -Ordered ((Get-Content $TaskPath) -join "`n")
     $task = $TaskName | ForEach-Object {
-        $taskConfig = (ConvertFrom-Yaml -Ordered ((Get-Content $TaskPath) -join "`n")).$_
+        $taskConfig = $taskConfigs.$_
         if ($null -eq $taskConfig) { throw "Specified task not found in task config: $_" }
         
         # 預處理路徑
-        $taskConfig.local = @($taskConfig.local -split "`n" | ForEach-Object { $_.TrimEnd() } | Where-Object { $_ })
-        $taskConfig.remote = @($taskConfig.remote -split "`n" | ForEach-Object { $_.TrimEnd() } | Where-Object { $_ })
+        $taskConfig.local = @($taskConfig.local -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+        $taskConfig.remote = @($taskConfig.remote -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ })
         
         # 預處理所有遠端路徑，無論是 get 還是 put 模式
         if ($taskConfig.remote.Count -eq 1) {
@@ -39,45 +78,13 @@ function ScpExecutor {
         $taskConfig
     }
     
-    # 建構 SCP 基本選項 (使用有序雜湊表)
-    $scpOptions = [ordered]@{}
+    # 建構 SCP 基本選項
+    $opts = [ordered]@{}
     $server.option.GetEnumerator() | ForEach-Object {
-        $scpOptions[$_.Key] = $_.Value
+        $opts[$_.Key] = $_.Value
     }
     
-    # 新增輔助函數來處理 SCP 命令執行
-    function Invoke-ScpCommand {
-        param($Options, $Source, $Target)
-        if ($null -eq $Source -or $null -eq $Target) {
-            throw "Source or target incomplete: Source=$($Source), Target=$($Target)"
-        }
-        if ($WhatIfPreference) {
-            $scpCommand = "scp $($Options -join ' ') $Source $Target"
-            Write-Host "WhatIf: $scpCommand" -ForegroundColor DarkCyan
-        } else {
-            scp $Options $Source $Target
-        }
-    }
-    
-    # 處理每個任務
-    foreach ($t in $task) {
-        # 根據模式決定源和目標
-        $source = @(if ($t.mode -eq 'put') { $t.local } else { $t.remote })
-        $target = @(if ($t.mode -eq 'put') { $t.remote } else { $t.local })
-        
-        # 建立基本選項陣列
-        $options = @($scpOptions.GetEnumerator() | ForEach-Object { "-o$($_.Key)=$($_.Value)" })
-        
-        # 預處理源和檢查目標數量是否相等
-        if ($target.Count -eq 1) {
-            $source = @(,$source)
-        } elseif ($source.Count -ne $target.Count) {
-            throw "Source and target count mismatch: Source=$($source.Count), Target=$($target.Count)"
-        }
-        
-        # 執行 SCP 命令
-        for ($i = 0; $i -lt $source.Count; $i++) {
-            Invoke-ScpCommand -Options $options -Source $source[$i] -Target $target[$i]
-        }
-    }
+    # 執行所有SCP任務
+    Invoke-ScpTasks -Tasks $task -Options $opts
+
 } # ScpExecutor RedHat79 Task1 -WhatIf
