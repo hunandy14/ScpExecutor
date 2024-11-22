@@ -55,28 +55,21 @@ function ScpExecutor {
         $optionsArray = @($scpOptions.GetEnumerator() | ForEach-Object { "-o$($_.Key)=$($_.Value)" })
         
         if ($target.Count -eq 1) { # 多來源到單一目標的情況
-            # 輸出scp命令
-            $scpCommand = "scp $($optionsArray -join ' ') $($source -join ' ') $($target)"
-            Write-Output $scpCommand
-            
-            # 執行scp命令
-            if ($PSCmdlet.ShouldProcess($scpCommand, "Execute SCP command")) {
+            if ($WhatIfPreference) {
+                $scpCommand = "scp $($optionsArray -join ' ') $($source -join ' ') $($target)"
+                Write-Host "WhatIf: $scpCommand" -ForegroundColor DarkCyan
+            } else {
                 scp $optionsArray $source $target
             }
-            
-        } else { # 一對一傳輸的情況
+        } else { # 多來源到多目標的情況
             for ($i = 0; $i -lt $source.Count; $i++) {
-                # 檢查來源和目標是否都存在
                 if ($null -eq $source[$i] -or $null -eq $target[$i]) {
                     throw "Source or target incomplete: Source=$($source[$i]), Target=$($target[$i])"
                 }
-                
-                # 輸出scp命令
-                $scpCommand = "scp $($optionsArray -join ' ') $($source[$i]) $($target[$i])"
-                Write-Output $scpCommand
-                
-                # 執行scp命令
-                if ($PSCmdlet.ShouldProcess($scpCommand, "Execute SCP command")) {
+                if ($WhatIfPreference) {
+                    $scpCommand = "scp $($optionsArray -join ' ') $($source[$i]) $($target[$i])"
+                    Write-Host "WhatIf: $scpCommand" -ForegroundColor DarkCyan
+                } else {
                     scp $optionsArray $source[$i] $target[$i]
                 }
             }
