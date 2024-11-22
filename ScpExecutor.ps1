@@ -15,15 +15,15 @@ function ScpExecutor {
     $TaskPath = [System.IO.Path]::GetFullPath($TaskPath)
     
     # 讀取伺服器設定
-    if (-not (Test-Path $ServerConfigPath)) { throw "找不到伺服器設定檔: $ServerConfigPath" }
-    if (-not (Test-Path $TaskPath)) { throw "找不到任務設定檔: $TaskPath" }
-    $sevr = (ConvertFrom-Yaml -Ordered ((Get-Content $ServerConfigPath) -join "`n")).$ServerConfigName
-    if ($null -eq $sevr) { throw "在設定檔中找不到指定的伺服器: $ServerConfigName" }
+    if (-not (Test-Path $ServerConfigPath)) { throw "Server config file not found: $ServerConfigPath" }
+    if (-not (Test-Path $TaskPath)) { throw "Task config file not found: $TaskPath" }
+    $server = (ConvertFrom-Yaml -Ordered ((Get-Content $ServerConfigPath) -join "`n")).$ServerConfigName
+    if ($null -eq $server) { throw "Specified server not found in config: $ServerConfigName" }
 
     # 讀取任務設定並預處理路徑
     $task = $TaskName | ForEach-Object {
         $taskConfig = (ConvertFrom-Yaml -Ordered ((Get-Content $TaskPath) -join "`n")).$_
-        if ($null -eq $taskConfig) { throw "在任務設定檔中找不到指定的任務: $_" }
+        if ($null -eq $taskConfig) { throw "Specified task not found in task config: $_" }
         
         # 預處理路徑
         $taskConfig.local = @($taskConfig.local -split "`n" | ForEach-Object { $_.TrimEnd() } | Where-Object { $_ })
@@ -31,9 +31,9 @@ function ScpExecutor {
         
         # 預處理所有遠端路徑，無論是 get 還是 put 模式
         if ($taskConfig.remote.Count -eq 1) {
-            $taskConfig.remote = @("$($sevr.user)@$($sevr.host):$($taskConfig.remote[0])")
+            $taskConfig.remote = @("$($server.user)@$($server.host):$($taskConfig.remote[0])")
         } else {
-            $taskConfig.remote = $taskConfig.remote | ForEach-Object { "$($sevr.user)@$($sevr.host):$_" }
+            $taskConfig.remote = $taskConfig.remote | ForEach-Object { "$($server.user)@$($server.host):$_" }
         }
         
         $taskConfig
@@ -41,7 +41,7 @@ function ScpExecutor {
     
     # 建構 SCP 基本選項 (使用有序雜湊表)
     $scpOptions = [ordered]@{}
-    $sevr.option.GetEnumerator() | ForEach-Object {
+    $server.option.GetEnumerator() | ForEach-Object {
         $scpOptions[$_.Key] = $_.Value
     }
     
@@ -66,7 +66,7 @@ function ScpExecutor {
             for ($i = 0; $i -lt $source.Count; $i++) {
                 # 檢查來源和目標是否都存在
                 if ($null -eq $source[$i] -or $null -eq $target[$i]) {
-                    throw "來源或目標不完整: 來源=$($source[$i]), 目標=$($target[$i])"
+                    throw "Source or target incomplete: Source=$($source[$i]), Target=$($target[$i])"
                 }
                 
                 # 輸出scp命令
