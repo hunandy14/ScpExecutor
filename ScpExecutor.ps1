@@ -29,14 +29,23 @@ function Initialize-Task($TaskConfig, $Server) {
 
 # 執行SCP命令
 function Invoke-ScpCommand($Options, $Source, $Target) {
-    if ($null -eq $Source -or $null -eq $Target) {
-        throw "Source or target incomplete: Source=$($Source), Target=$($Target)"
-    }
+    # 檢查源和目標是否完整
+    if ($null -eq $Source -or $null -eq $Target) { throw "Source or target incomplete: Source=$($Source), Target=$($Target)" }
+    
+    # 組合SCP命令
+    $scpCommand = "scp $($Options -join ' ') $Source $Target"
+    
+    # 執行命令
     if ($WhatIfPreference) {
-        $scpCommand = "scp $($Options -join ' ') $Source $Target"
         Write-Host "WhatIf: $scpCommand" -ForegroundColor DarkCyan
     } else {
+        Write-Host "Executing Command: $scpCommand" -ForegroundColor DarkGray
         scp $Options $Source $Target
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "└─ SUCC" -ForegroundColor Green
+        } else {
+            Write-Host "└─ FAIL" -ForegroundColor Red
+        }
     }
 }
 
