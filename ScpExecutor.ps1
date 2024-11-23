@@ -12,16 +12,16 @@ function Initialize-Options($ServerConfig) {
 }
 
 # 建構Task任務
-function Initialize-Task($TaskConfig, $Server) {
+function Initialize-Task($TaskConfig, $ServerConfig) {
     # 處理路徑
     $TaskConfig.local = @($TaskConfig.local -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ })
     $TaskConfig.remote = @($TaskConfig.remote -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ })
     
     # 加入使用者和主機資訊到遠端路徑
     if ($TaskConfig.remote.Count -eq 1) {
-        $TaskConfig.remote = @("$($Server.user)@$($Server.host):$($TaskConfig.remote[0])")
+        $TaskConfig.remote = @("$($ServerConfig.user)@$($ServerConfig.host):$($TaskConfig.remote[0])")
     } else {
-        $TaskConfig.remote = $TaskConfig.remote | ForEach-Object { "$($Server.user)@$($Server.host):$_" }
+        $TaskConfig.remote = $TaskConfig.remote | ForEach-Object { "$($ServerConfig.user)@$($ServerConfig.host):$_" }
     }
     
     return $TaskConfig
@@ -95,20 +95,20 @@ function ScpExecutor {
     
     # 讀取伺服器設定並建構Options
     if (-not (Test-Path $ServerConfigPath)) { throw "Server config file not found: $ServerConfigPath" }
-    $servConf = (ConvertFrom-Yaml -Ordered ((Get-Content $ServerConfigPath -EA Stop) -join "`n")).$ServerNodeName
-    if (-not $servConf) { throw "Specified server not found in config: $ServerNodeName" }
-    $opts = Initialize-Options -ServerConfig $servConf
+    $sevCnf = (ConvertFrom-Yaml -Ordered ((Get-Content $ServerConfigPath -EA Stop) -join "`n")).$ServerNodeName
+    if (-not $sevCnf) { throw "Specified server not found in config: $ServerNodeName" }
+    $opts = Initialize-Options -ServerConfig $sevCnf
     
     # 讀取任務設定並建構Task
     if (-not (Test-Path $TaskConfigPath)) { throw "Task config file not found: $TaskConfigPath" }
     $taskYaml = ConvertFrom-Yaml -Ordered ((Get-Content $TaskConfigPath -EA Stop) -join "`n")
     $tasks = $TaskName | ForEach-Object {
-        $taskConf = $taskYaml.$_
-        if (-not $taskConf) { throw "Specified task not found in task config: $_" }
-        Initialize-Task -TaskConfig $taskConf -Server $servConf
+        $taskCnf = $taskYaml.$_
+        if (-not $taskCnf) { throw "Specified task not found in task config: $_" }
+        Initialize-Task -TaskConfig $taskCnf -ServerConfig $sevCnf
     }
     
     # 執行所有SCP任務
     Invoke-ScpTasks -Tasks $tasks -Options $opts
-
+    
 } # ScpExecutor RedHat79 Task1 -WhatIf
