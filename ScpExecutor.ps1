@@ -84,9 +84,13 @@ function ScpExecutor {
         [string]$ServerNodeName,
         [Parameter(Position = 1, Mandatory, ValueFromRemainingArguments)]
         [string[]]$TaskName,
-        [string]$ServerConfigPath = 'serverConfig.yaml',
-        [string]$TaskConfigPath = 'taskConfig.yaml'
+        [string]$ServerConfigPath,
+        [string]$TaskConfigPath
     )
+    
+    # 設定配置文件路徑優先順序：使用者輸入 > 環境變數 > 預設值
+    if (-not $ServerConfigPath) { $ServerConfigPath = if ($env:SCPX_SERVER_CONFIG) { $env:SCPX_SERVER_CONFIG } else { 'serverConfig.yaml' } }
+    if (-not $TaskConfigPath) { $TaskConfigPath = if ($env:SCPX_TASK_CONFIG) { $env:SCPX_TASK_CONFIG } else { 'taskConfig.yaml' } }
     
     # 同步 .Net 環境工作目錄
     [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
