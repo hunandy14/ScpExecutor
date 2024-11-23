@@ -1,4 +1,4 @@
-task1:
+task1: # 上傳複數檔案到遠端資料夾
   mode: put
   local: |-
     local_dir1/File1.txt
@@ -6,7 +6,7 @@ task1:
   remote:
     ~/remote_dir/
 
-task2:
+task2: # 下載複數檔案到本地資料夾
   mode: get
   local:
     local_dir/
@@ -14,7 +14,7 @@ task2:
     ~/remote_dir1/File1.txt
     ~/remote_dir2/File2.txt
 
-task3:
+task3: # 1對1下載
   mode: get
   local: |-
     local_dir1/File1.txt
@@ -23,7 +23,7 @@ task3:
     ~/remote_dir1/File1.txt
     ~/remote_dir2/File2.txt
 
-task4:
+task4: # 1對1上傳
   mode: put
   local: |-
     local_dir1/File1.txt
@@ -32,10 +32,18 @@ task4:
     ~/remote_dir1/File1.txt
     ~/remote_dir2/File2.txt
 
-task5:
-  option: -rv
+task5: # 遞歸上傳資料夾
+  option: -r
   mode: put
-  local: |-
-    local_dir1/File1.txt
+  local:
+    local_dir/*
   remote:
     ~/remote_dir/
+
+task6: # 遞歸下載資料夾
+  option: -r
+  mode: get
+  local:
+    local_dir/
+  remote:
+    ~/remote_dir/*
