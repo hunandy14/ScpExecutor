@@ -63,7 +63,7 @@ task2:
 - **local**: 本地要傳輸的文件或目錄。
 - **remote**: SCP 操作的遠端文件或目錄。
 
-此外在 local 與 remote 的多對多設置下，會1對1的將每個文件使用獨立的對話傳輸，可以實現不同資料夾檔案對不同資料夾的傳輸。
+在 local 與 remote 的多對多設置下，會1對1的將每個文件使用獨立的對話傳輸，可以實現不同資料夾檔案對不同資料夾的傳輸。
 
 ```yaml
 task4:
@@ -77,6 +77,21 @@ task4:
 ```
 
 > 確保 local 與 remote 的數量是對等的，否則會引發錯誤
+
+新增 option 選項，可以指定額外的 SCP 選項，例如遞歸上傳資料夾中的所有文件。
+
+```yaml
+task5:
+  option: -r
+  mode: put
+  local:
+    local_dir/*
+  remote:
+    ~/remote_dir/
+```
+
+> 任務中的 option 可以指定多個 scp 選項。
+> 例如 `option: -c -r` 或 `option: -cr` 壓縮並遞歸上傳。
 
 ## ScpExecutor 使用方式
 
