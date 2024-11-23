@@ -95,16 +95,16 @@ function ScpExecutor {
     # 同步 .Net 環境工作目錄
     [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
     $ServerConfigPath = [IO.Path]::GetFullPath($ServerConfigPath)
+    if (-not (Test-Path $ServerConfigPath)) { throw "Server config file not found: $ServerConfigPath" }
     $TaskConfigPath = [IO.Path]::GetFullPath($TaskConfigPath)
+    if (-not (Test-Path $TaskConfigPath)) { throw "Task config file not found: $TaskConfigPath" }
     
     # 讀取伺服器設定並建構Options
-    if (-not (Test-Path $ServerConfigPath)) { throw "Server config file not found: $ServerConfigPath" }
     $sevCnf = (ConvertFrom-Yaml -Ordered ((Get-Content $ServerConfigPath -EA Stop) -join "`n")).$ServerNodeName
     if (-not $sevCnf) { throw "Specified server not found in config: $ServerNodeName" }
     $opts = Initialize-Options -ServerConfig $sevCnf
     
     # 讀取任務設定並建構Task
-    if (-not (Test-Path $TaskConfigPath)) { throw "Task config file not found: $TaskConfigPath" }
     $taskYaml = ConvertFrom-Yaml -Ordered ((Get-Content $TaskConfigPath -EA Stop) -join "`n")
     $tasks = $TaskName | ForEach-Object {
         $taskCnf = $taskYaml.$_
