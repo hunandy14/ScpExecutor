@@ -35,7 +35,9 @@ MyServer:
 
 ### 2. taskConfig.yaml
 
-此檔案定義了文件傳輸任務。範例：
+此檔案定義了文件傳輸任務。
+
+複數個文件上傳到遠端資料夾：
 
 ```yaml
 task1:
@@ -45,7 +47,11 @@ task1:
     local_dir2/File2.txt
   remote:
     ~/remote_dir/
+```
 
+複數個文件下載到本地資料夾：
+
+```yaml
 task2:
   mode: get
   local:
@@ -59,7 +65,7 @@ task2:
 - **local**: 本地要傳輸的文件或目錄。
 - **remote**: SCP 操作的遠端文件或目錄。
 
-在 local 與 remote 的多對多設置下，`ScpExecutor` 會1對1的將每個文件使用獨立的對話傳輸。
+此外在 local 與 remote 的多對多設置下，會1對1的將每個文件使用獨立的對話傳輸，可以實現不同資料夾檔案對不同資料夾的傳輸。
 
 ```yaml
 task4:
@@ -71,10 +77,6 @@ task4:
     ~/remote_dir1/File1.txt
     ~/remote_dir2/File2.txt
 ```
-
-- **mode**: `put` 表示上傳文件，`get` 表示下載文件。
-- **local**: 要傳輸的多個本地文件。
-- **remote**: 每個本地文件對應的遠端位置。
 
 > 確保 local 與 remote 的數量是對等的，否則會引發錯誤
 
