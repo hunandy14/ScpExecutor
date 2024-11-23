@@ -31,3 +31,11 @@ task4:
   remote: |-
     ~/remote_dir1/File1.txt
     ~/remote_dir2/File2.txt
+
+task5:
+  option: -rv
+  mode: put
+  local: |-
+    local_dir1/File1.txt
+  remote:
+    ~/remote_dir/

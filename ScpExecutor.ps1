@@ -58,6 +58,7 @@ function Invoke-ScpTasks($Tasks, $Options) {
         
         # 建立基本選項陣列
         $opts = @($Options.GetEnumerator() | ForEach-Object { "-o$($_.Key)=$($_.Value)" })
+        if ($t.option) { $opts = @($t.option) + $opts }
         
         # 預處理源和檢查目標數量是否相等
         if ($target.Count -eq 1) {
