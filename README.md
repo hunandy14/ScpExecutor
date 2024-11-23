@@ -10,9 +10,7 @@
 - 必須安裝並能夠訪問 OpenSSH 客戶端
 - 用於伺服器配置（`serverConfig.yaml`）和任務（`taskConfig.yaml`）的 YAML 檔案
 
-## 文件說明
-
-### 1. serverConfig.yaml
+## serverConfig.yaml 文件定義
 
 此檔案包含遠端伺服器的配置資訊。範例：
 
@@ -33,7 +31,7 @@ MyServer:
 - **option**: 額外的 SSH 選項，例如身份檔案。
 - **log**: SCP 操作的日誌檔案存儲路徑。
 
-### 2. taskConfig.yaml
+## taskConfig.yaml 文件定義
 
 此檔案定義了文件傳輸任務。
 
@@ -80,7 +78,7 @@ task4:
 
 > 確保 local 與 remote 的數量是對等的，否則會引發錯誤
 
-### 3. ScpExecutor.ps1
+## ScpExecutor 使用方式
 
 這個 PowerShell 腳本提供了一個名為 `ScpExecutor` 的函數，其別名為 `scpx`。函數參數包括：
 
@@ -88,8 +86,6 @@ task4:
 - **TaskName**: 要執行的任務名稱，這些任務定義在 `taskConfig.yaml` 中（必填）。
 - **ServerConfigPath**: 伺服器配置 YAML 檔案的路徑，預設為 `serverConfig.yaml`。
 - **TaskConfigPath**: 任務 YAML 檔案的路徑，預設為 `taskConfig.yaml`。
-
-## 使用方式
 
 要使用 `ScpExecutor` 函數，請執行以下命令：
 
@@ -99,16 +95,7 @@ ScpExecutor -ServerNodeName 'MyServer' -TaskName 'task1'
 
 > 該命令將使用名為 `MyServer` 的伺服器配置，來執行 `taskConfig.yaml` 中定義的任務 `task1`。
 
-
-
-### 參數
-
-- **ServerNodeName**: 指定要用於操作的伺服器配置。
-- **TaskName**: 一個或多個對應於 `taskConfig.yaml` 檔案中的任務名稱。
-- **ServerConfigPath**（可選）: 自訂伺服器配置 YAML 檔案的路徑。
-- **TaskConfigPath**（可選）: 自訂任務 YAML 檔案的路徑。
-
-此外，`TaskName` 參數也可以接受多個任務名稱，以便一次執行多個任務
+參數 `TaskName` 也可以接受多個任務名稱，以便一次執行多個任務
 
 ```powershell
 ScpExecutor -ServerNodeName 'MyServer' -TaskName 'task1','task2'
