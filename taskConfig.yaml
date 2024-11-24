@@ -47,3 +47,10 @@ task6: # 遞歸下載資料夾
     local_dir/
   remote:
     ~/remote_dir/*
+
+task7: # 遠端複製到遠端
+  mode: put
+  local:
+    ~/TestFile.txt
+  remote:
+    ~/TestFile.txt

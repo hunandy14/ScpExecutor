@@ -12,14 +12,22 @@ function Initialize-Options($remotConfig) {
 }
 
 # 建構Task任務
-function Initialize-Task($taskConfig, $remoteConfig) {
+function Initialize-Task($taskConfig, $remoteConfig, $sourceConfig) {
     # 預處理路徑成陣列
     $taskConfig.local = $taskConfig.local -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
     $taskConfig.remote = $taskConfig.remote -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
     
     # 遠端路徑前綴加上使用者和主機資訊
+    if (-not $remoteConfig) { throw "Remote config not found" }
     $taskConfig.remote = @($taskConfig.remote) | ForEach-Object {
         "$($remoteConfig.user)@$($remoteConfig.host):$_"
+    }
+    
+    # 源路徑前綴加上使用者和主機資訊
+    if ($sourceConfig) {
+        $taskConfig.local = @($taskConfig.local) | ForEach-Object {
+            "$($sourceConfig.user)@$($sourceConfig.host):$_"
+        }
     }
     
     return $taskConfig
@@ -80,6 +88,7 @@ function ScpExecutor {
     Param(
         [Parameter(Position = 0, Mandatory)]
         [string]$RemoteHost,
+        [string]$LocalHost,
         [Parameter(Position = 1, Mandatory, ValueFromRemainingArguments)]
         [string[]]$TaskName,
         [string]$ServerConfigPath,
@@ -98,7 +107,8 @@ function ScpExecutor {
     if (-not (Test-Path $TaskConfigPath)) { throw "Task config file not found: $TaskConfigPath" }
     
     # 讀取伺服器設定並建構Options
-    $remoteCnf = (ConvertFrom-Yaml -Ordered ((Get-Content $ServerConfigPath -EA Stop) -join "`n")).$RemoteHost
+    $hostYaml = ConvertFrom-Yaml -Ordered ((Get-Content $ServerConfigPath -EA Stop) -join "`n")
+    $remoteCnf = $hostYaml.$RemoteHost
     if (-not $remoteCnf) { throw "Specified server not found in config: $RemoteHost" }
     $opts = Initialize-Options $remoteCnf
     
@@ -107,10 +117,10 @@ function ScpExecutor {
     $tasks = $TaskName | ForEach-Object {
         $taskCnf = $taskYaml.$_
         if (-not $taskCnf) { throw "Specified task not found in task config: $_" }
-        Initialize-Task $taskCnf $remoteCnf
+        Initialize-Task $taskCnf $remoteCnf ($hostYaml.$LocalHost)
     }
     
     # 執行所有SCP任務
     Invoke-ScpTasks $tasks $opts
     
-} ScpExecutor RedHat79 Task1 -WhatIf
+} # ScpExecutor RedHat79 Task7 -LocalHost Wsl2
