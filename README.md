@@ -4,6 +4,16 @@
 
 `ScpExecutor` 是一個 PowerShell 腳本，用於在本地和遠端伺服器之間執行安全文件傳輸（SCP）操作此腳本使用 YAML 配置檔案來定義伺服器資訊（`hostConfig.yaml`）和任務定義（`taskConfig.yaml`），幫助自動化基於預定義任務的文件傳輸，例如上傳或下載文件或目錄
 
+快速下載樣板到當前工作目錄
+
+```powershell
+mkdir ScpExecutor
+cd ScpExecutor
+irm https://raw.githubusercontent.com/hunandy14/ScpExecutor/refs/heads/main/ScpExecutor.ps1 -OutFile ScpExecutor.ps1
+irm https://raw.githubusercontent.com/hunandy14/ScpExecutor/refs/heads/main/taskConfig.yaml -OutFile taskConfig.yaml
+irm https://raw.githubusercontent.com/hunandy14/ScpExecutor/refs/heads/main/hostConfig.yaml -OutFile hostConfig.yaml
+```
+
 ## 系統需求
 
 - PowerShell 5.1 或更高版本
@@ -63,7 +73,9 @@ task2:
 - **local**: 本地要傳輸的文件或目錄
 - **remote**: SCP 操作的遠端文件或目錄
 
-在 local 與 remote 的多對多設置下，會1對1的將每個文件使用獨立的對話傳輸，可以實現不同資料夾檔案對不同資料夾的傳輸
+在 local 與 remote 的多對多設置下，會1對1的將每個文件使用獨立的對話傳輸
+
+> 可以實現不同資料夾檔案對不同資料夾的傳輸
 
 ```yaml
 task4:
@@ -90,7 +102,7 @@ task5:
     ~/remote_dir/
 ```
 
-> 任務中的 option 可以指定多個 scp 選項例如 `option: -c -p`
+> 任務中的 option 可以指定多個 scp 選項例如 `option: -c -p`  
 > 或者合併 `option: -cp` 分別表示 [遞歸, 保持時間戳記]
 
 ## ScpExecutor 使用方式
@@ -121,12 +133,12 @@ ScpExecutor -RemoteHost 'MyServer' -TaskName 'task1','task2'
 
 ### 指定本地端伺服器
 
-如果需要將遠端文件傳輸到本地端，也是讓當前 Host 作為中轉站轉發檔案，
+如果需要將遠端文件傳輸到本地端，也是讓當前 Host 作為中轉站轉發檔案  
 可以使用 `-LocalHost` 參數將本地取代為另一個伺服器配置
 
 ```powershell
 ScpExecutor -LocalHost 'Wsl2' -RemoteHost 'MyServer' -TaskName 'task1'
 ```
 
-> 該命令將會以 `Wsl2` 作為本地端來執行任務 `task1`
+> 該命令將會以 `Wsl2` 作為本地端來執行任務 `task1`  
 > 也就是說實際結果會將 `Wsl2` 的文件傳輸到 `MyServer`
