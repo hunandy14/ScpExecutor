@@ -48,7 +48,7 @@ task6: # 遞歸下載資料夾
   remote:
     ~/remote_dir/*
 
-task7: # 遠端複製到遠端
+task7: # 遠端複製到遠端 (指令搭配 -LocalHost Wsl2 指定本地端更改為 Wsl2)
   mode: put
   local:
     ~/TestFile.txt
