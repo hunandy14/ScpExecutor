@@ -97,7 +97,7 @@ task5:
 
 這個 PowerShell 腳本提供了一個名為 `ScpExecutor` 的函數，其別名為 `scpx`。函數參數包括：
 
-- **ServerNodeName**: 要使用的伺服器配置名稱（必填）。
+- **RemoteHost**: 要使用的伺服器配置名稱（必填）。
 - **TaskName**: 要執行的任務名稱，這些任務定義在 `taskConfig.yaml` 中（必填）。
 - **ServerConfigPath**: 伺服器配置 YAML 檔案的路徑，預設為 `serverConfig.yaml`。
 - **TaskConfigPath**: 任務 YAML 檔案的路徑，預設為 `taskConfig.yaml`。
@@ -105,7 +105,7 @@ task5:
 要使用 `ScpExecutor` 函數，請執行以下命令：
 
 ```powershell
-ScpExecutor -ServerNodeName 'MyServer' -TaskName 'task1'
+ScpExecutor -RemoteHost 'MyServer' -TaskName 'task1'
 ```
 
 > 該命令將使用名為 `MyServer` 的伺服器配置，來執行 `taskConfig.yaml` 中定義的任務 `task1`。
@@ -113,7 +113,7 @@ ScpExecutor -ServerNodeName 'MyServer' -TaskName 'task1'
 參數 `TaskName` 也可以接受多個任務名稱，以便一次執行多個任務
 
 ```powershell
-ScpExecutor -ServerNodeName 'MyServer' -TaskName 'task1','task2'
+ScpExecutor -RemoteHost 'MyServer' -TaskName 'task1','task2'
 ```
 
 此範例將會執行兩個任務 `task1` 和 `task2`，根據 `taskConfig.yaml` 中的設定上傳或下載相應的文件。

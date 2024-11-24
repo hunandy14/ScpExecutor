@@ -79,7 +79,7 @@ function ScpExecutor {
     [CmdletBinding(SupportsShouldProcess)] [Alias("scpx")]
     Param(
         [Parameter(Position = 0, Mandatory)]
-        [string]$ServerNodeName,
+        [string]$RemoteHost,
         [Parameter(Position = 1, Mandatory, ValueFromRemainingArguments)]
         [string[]]$TaskName,
         [string]$ServerConfigPath,
@@ -98,8 +98,8 @@ function ScpExecutor {
     if (-not (Test-Path $TaskConfigPath)) { throw "Task config file not found: $TaskConfigPath" }
     
     # 讀取伺服器設定並建構Options
-    $remoteCnf = (ConvertFrom-Yaml -Ordered ((Get-Content $ServerConfigPath -EA Stop) -join "`n")).$ServerNodeName
-    if (-not $remoteCnf) { throw "Specified server not found in config: $ServerNodeName" }
+    $remoteCnf = (ConvertFrom-Yaml -Ordered ((Get-Content $ServerConfigPath -EA Stop) -join "`n")).$RemoteHost
+    if (-not $remoteCnf) { throw "Specified server not found in config: $RemoteHost" }
     $opts = Initialize-Options $remoteCnf
     
     # 讀取任務設定並建構Task
