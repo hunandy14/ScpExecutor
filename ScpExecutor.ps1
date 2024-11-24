@@ -13,15 +13,13 @@ function Initialize-Options($ServerConfig) {
 
 # 建構Task任務
 function Initialize-Task($TaskConfig, $ServerConfig) {
-    # 處理路徑
-    $TaskConfig.local = @($TaskConfig.local -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-    $TaskConfig.remote = @($TaskConfig.remote -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    # 預處理路徑成陣列
+    $TaskConfig.local = $TaskConfig.local -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+    $TaskConfig.remote = $TaskConfig.remote -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
     
-    # 加入使用者和主機資訊到遠端路徑
-    if ($TaskConfig.remote.Count -eq 1) {
-        $TaskConfig.remote = @("$($ServerConfig.user)@$($ServerConfig.host):$($TaskConfig.remote[0])")
-    } else {
-        $TaskConfig.remote = $TaskConfig.remote | ForEach-Object { "$($ServerConfig.user)@$($ServerConfig.host):$_" }
+    # 遠端路徑前綴加上使用者和主機資訊
+    $TaskConfig.remote = @($TaskConfig.remote) | ForEach-Object {
+        "$($ServerConfig.user)@$($ServerConfig.host):$_"
     }
     
     return $TaskConfig
