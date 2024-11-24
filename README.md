@@ -90,8 +90,8 @@ task5:
     ~/remote_dir/
 ```
 
-> 任務中的 option 可以指定多個 scp 選項。
-> 例如 `option: -c -r` 或 `option: -cr` 壓縮並遞歸上傳。
+> 任務中的 option 可以指定多個 scp 選項。例如 `option: -c -p`
+> 或者合併 `option: -cp` 分別表示 [遞歸, 保持時間戳記]。
 
 ## ScpExecutor 使用方式
 

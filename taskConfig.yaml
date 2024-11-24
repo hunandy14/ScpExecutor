@@ -33,7 +33,7 @@ task4: # 1對1上傳
     ~/remote_dir2/File2.txt
 
 task5: # 遞歸上傳資料夾
-  option: -r
+  option: -rp
   mode: put
   local:
     local_dir/*
@@ -41,7 +41,7 @@ task5: # 遞歸上傳資料夾
     ~/remote_dir/
 
 task6: # 遞歸下載資料夾
-  option: -r
+  option: -rp
   mode: get
   local:
     local_dir/
