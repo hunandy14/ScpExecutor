@@ -14,11 +14,50 @@ irm https://raw.githubusercontent.com/hunandy14/ScpExecutor/refs/heads/main/task
 irm https://raw.githubusercontent.com/hunandy14/ScpExecutor/refs/heads/main/hostConfig.yaml -OutFile hostConfig.yaml
 ```
 
-## 系統需求
 
-- PowerShell 5.1 或更高版本
-- 必須安裝並能夠訪問 OpenSSH 客戶端
-- 用於伺服器配置（`hostConfig.yaml`）和任務（`taskConfig.yaml`）的 YAML 檔案
+<br><br>
+
+## ScpExecutor 使用方式
+
+這個 PowerShell 腳本提供了一個名為 `ScpExecutor` 的函數，其別名為 `scpx`函數參數包括：
+
+- **RemoteHost**: 要使用的伺服器配置名稱（必填）
+- **TaskName**: 要執行的任務名稱，這些任務定義在 `taskConfig.yaml` 中（必填）
+- **HostConfigPath**: 伺服器配置 YAML 檔案的路徑，預設為 `hostConfig.yaml`
+- **TaskConfigPath**: 任務 YAML 檔案的路徑，預設為 `taskConfig.yaml`
+
+要使用 `ScpExecutor` 函數，請執行以下命令：
+
+```powershell
+ScpExecutor -RemoteHost 'MyServer' -TaskName 'task1'
+```
+
+> 該命令將使用名為 `MyServer` 的伺服器配置，來執行 `taskConfig.yaml` 中定義的任務 `task1`
+
+參數 `TaskName` 也可以接受多個任務名稱，以便一次執行多個任務
+
+```powershell
+ScpExecutor -RemoteHost 'MyServer' -TaskName 'task1','task2'
+```
+
+此範例將會執行兩個任務 `task1` 和 `task2`，根據 `taskConfig.yaml` 中的設定上傳或下載相應的文件
+
+
+### 指定本地端伺服器
+
+如果需要將遠端文件傳輸到本地端，也是讓當前 Host 作為中轉站轉發檔案  
+可以使用 `-LocalHost` 參數將本地取代為另一個伺服器配置
+
+```powershell
+ScpExecutor -LocalHost 'Wsl2' -RemoteHost 'MyServer' -TaskName 'task1'
+```
+
+> 該命令將會以 `Wsl2` 作為本地端來執行任務 `task1`  
+> 也就是說實際結果會將 `Wsl2` 的文件傳輸到 `MyServer`
+
+
+
+<br><br>
 
 ## hostConfig.yaml 文件定義
 
@@ -104,41 +143,3 @@ task5:
 
 > 任務中的 option 可以指定多個 scp 選項例如 `option: -c -p`  
 > 或者合併 `option: -cp` 分別表示 [遞歸, 保持時間戳記]
-
-## ScpExecutor 使用方式
-
-這個 PowerShell 腳本提供了一個名為 `ScpExecutor` 的函數，其別名為 `scpx`函數參數包括：
-
-- **RemoteHost**: 要使用的伺服器配置名稱（必填）
-- **TaskName**: 要執行的任務名稱，這些任務定義在 `taskConfig.yaml` 中（必填）
-- **HostConfigPath**: 伺服器配置 YAML 檔案的路徑，預設為 `hostConfig.yaml`
-- **TaskConfigPath**: 任務 YAML 檔案的路徑，預設為 `taskConfig.yaml`
-
-要使用 `ScpExecutor` 函數，請執行以下命令：
-
-```powershell
-ScpExecutor -RemoteHost 'MyServer' -TaskName 'task1'
-```
-
-> 該命令將使用名為 `MyServer` 的伺服器配置，來執行 `taskConfig.yaml` 中定義的任務 `task1`
-
-參數 `TaskName` 也可以接受多個任務名稱，以便一次執行多個任務
-
-```powershell
-ScpExecutor -RemoteHost 'MyServer' -TaskName 'task1','task2'
-```
-
-此範例將會執行兩個任務 `task1` 和 `task2`，根據 `taskConfig.yaml` 中的設定上傳或下載相應的文件
-
-
-### 指定本地端伺服器
-
-如果需要將遠端文件傳輸到本地端，也是讓當前 Host 作為中轉站轉發檔案  
-可以使用 `-LocalHost` 參數將本地取代為另一個伺服器配置
-
-```powershell
-ScpExecutor -LocalHost 'Wsl2' -RemoteHost 'MyServer' -TaskName 'task1'
-```
-
-> 該命令將會以 `Wsl2` 作為本地端來執行任務 `task1`  
-> 也就是說實際結果會將 `Wsl2` 的文件傳輸到 `MyServer`
