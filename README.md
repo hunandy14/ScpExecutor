@@ -2,15 +2,15 @@
 
 ## 概述
 
-`ScpExecutor` 是一個 PowerShell 腳本，用於在本地和遠端伺服器之間執行安全文件傳輸（SCP）操作。此腳本使用 YAML 配置檔案來定義伺服器資訊（`serverConfig.yaml`）和任務定義（`taskConfig.yaml`），幫助自動化基於預定義任務的文件傳輸，例如上傳或下載文件或目錄。
+`ScpExecutor` 是一個 PowerShell 腳本，用於在本地和遠端伺服器之間執行安全文件傳輸（SCP）操作。此腳本使用 YAML 配置檔案來定義伺服器資訊（`hostConfig.yaml`）和任務定義（`taskConfig.yaml`），幫助自動化基於預定義任務的文件傳輸，例如上傳或下載文件或目錄。
 
 ## 系統需求
 
 - PowerShell 5.1 或更高版本
 - 必須安裝並能夠訪問 OpenSSH 客戶端
-- 用於伺服器配置（`serverConfig.yaml`）和任務（`taskConfig.yaml`）的 YAML 檔案
+- 用於伺服器配置（`hostConfig.yaml`）和任務（`taskConfig.yaml`）的 YAML 檔案
 
-## serverConfig.yaml 文件定義
+## hostConfig.yaml 文件定義
 
 此檔案包含遠端伺服器的配置資訊。範例：
 
@@ -99,7 +99,7 @@ task5:
 
 - **RemoteHost**: 要使用的伺服器配置名稱（必填）。
 - **TaskName**: 要執行的任務名稱，這些任務定義在 `taskConfig.yaml` 中（必填）。
-- **ServerConfigPath**: 伺服器配置 YAML 檔案的路徑，預設為 `serverConfig.yaml`。
+- **HostConfigPath**: 伺服器配置 YAML 檔案的路徑，預設為 `hostConfig.yaml`。
 - **TaskConfigPath**: 任務 YAML 檔案的路徑，預設為 `taskConfig.yaml`。
 
 要使用 `ScpExecutor` 函數，請執行以下命令：

@@ -91,23 +91,23 @@ function ScpExecutor {
         [string]$LocalHost,
         [Parameter(Position = 1, Mandatory, ValueFromRemainingArguments)]
         [string[]]$TaskName,
-        [string]$ServerConfigPath,
+        [string]$HostConfigPath,
         [string]$TaskConfigPath
     )
     
     # 設定配置文件路徑優先順序：使用者輸入 > 環境變數 > 預設值
-    if (-not $ServerConfigPath) { $ServerConfigPath = if ($env:SCPX_SERVER_CONFIG) { $env:SCPX_SERVER_CONFIG } else { 'serverConfig.yaml' } }
+    if (-not $HostConfigPath) { $HostConfigPath = if ($env:SCPX_SERVER_CONFIG) { $env:SCPX_SERVER_CONFIG } else { 'hostConfig.yaml' } }
     if (-not $TaskConfigPath) { $TaskConfigPath = if ($env:SCPX_TASK_CONFIG) { $env:SCPX_TASK_CONFIG } else { 'taskConfig.yaml' } }
     
     # 同步 .Net 環境工作目錄
     [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
-    $ServerConfigPath = [IO.Path]::GetFullPath($ServerConfigPath)
-    if (-not (Test-Path $ServerConfigPath)) { throw "Server config file not found: $ServerConfigPath" }
+    $HostConfigPath = [IO.Path]::GetFullPath($HostConfigPath)
+    if (-not (Test-Path $HostConfigPath)) { throw "Server config file not found: $HostConfigPath" }
     $TaskConfigPath = [IO.Path]::GetFullPath($TaskConfigPath)
     if (-not (Test-Path $TaskConfigPath)) { throw "Task config file not found: $TaskConfigPath" }
     
     # 讀取伺服器設定並建構Options
-    $hostYaml = ConvertFrom-Yaml -Ordered ((Get-Content $ServerConfigPath -EA Stop) -join "`n")
+    $hostYaml = ConvertFrom-Yaml -Ordered ((Get-Content $HostConfigPath -EA Stop) -join "`n")
     $remoteCnf = $hostYaml.$RemoteHost
     if (-not $remoteCnf) { throw "Specified server not found in config: $RemoteHost" }
     $opts = Initialize-Options $remoteCnf
