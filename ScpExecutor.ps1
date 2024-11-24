@@ -1,7 +1,7 @@
 # 建構Option選項
-function Initialize-Options($ServerConfig) {
+function Initialize-Options($remotConfig) {
     $opts = [ordered]@{}
-    $ServerConfig.option.GetEnumerator() | ForEach-Object {
+    $remotConfig.option.GetEnumerator() | ForEach-Object {
         if ($IsWindows -and $_.Value -match '^~[/\\]') {
             $_.Value = $_.Value -replace('^~', ($env:USERPROFILE).Replace('\', '/'))
         }
@@ -12,33 +12,33 @@ function Initialize-Options($ServerConfig) {
 }
 
 # 建構Task任務
-function Initialize-Task($TaskConfig, $ServerConfig) {
+function Initialize-Task($taskConfig, $remoteConfig) {
     # 預處理路徑成陣列
-    $TaskConfig.local = $TaskConfig.local -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-    $TaskConfig.remote = $TaskConfig.remote -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+    $taskConfig.local = $taskConfig.local -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+    $taskConfig.remote = $taskConfig.remote -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
     
     # 遠端路徑前綴加上使用者和主機資訊
-    $TaskConfig.remote = @($TaskConfig.remote) | ForEach-Object {
-        "$($ServerConfig.user)@$($ServerConfig.host):$_"
+    $taskConfig.remote = @($taskConfig.remote) | ForEach-Object {
+        "$($remoteConfig.user)@$($remoteConfig.host):$_"
     }
     
-    return $TaskConfig
+    return $taskConfig
 }
 
 # 執行SCP命令
-function Invoke-ScpCommand($Options, $Source, $Target) {
+function Invoke-ScpCommand($options, $source, $target) {
     # 檢查源和目標是否完整
-    if ($null -eq $Source -or $null -eq $Target) { throw "Source or target incomplete: Source=$($Source), Target=$($Target)" }
+    if ($null -eq $source -or $null -eq $target) { throw "Source or target incomplete: Source=$source, Target=$target" }
     
     # 組合SCP命令
-    $scpCommand = "scp $($Options -join ' ') $Source $Target"
+    $scpCommand = "scp $($options -join ' ') $source $target"
     
     # 執行命令
     if ($WhatIfPreference) {
         Write-Host "WhatIf: $scpCommand" -ForegroundColor DarkCyan
     } else {
         Write-Host "Executing Command: $scpCommand" -ForegroundColor DarkGray
-        scp $Options $Source $Target
+        scp $options $source $target
         if ($LASTEXITCODE -eq 0) {
             Write-Host "└─ SUCC" -ForegroundColor Green
         } else {
@@ -48,14 +48,14 @@ function Invoke-ScpCommand($Options, $Source, $Target) {
 }
 
 # 執行所有SCP任務
-function Invoke-ScpTasks($Tasks, $Options) {
-    foreach ($t in $Tasks) {
+function Invoke-ScpTasks($tasks, $options) {
+    foreach ($t in $tasks) {
         # 根據模式決定源和目標
         $source = @(if ($t.mode -eq 'put') { $t.local } else { $t.remote })
         $target = @(if ($t.mode -eq 'put') { $t.remote } else { $t.local })
         
         # 建立基本選項陣列
-        $opts = @($Options.GetEnumerator() | ForEach-Object { "-o$($_.Key)=$($_.Value)" })
+        $opts = @($options.GetEnumerator() | ForEach-Object { "-o$($_.Key)=$($_.Value)" })
         if ($t.option) { $opts = @($t.option) + $opts }
         
         # 預處理源和檢查目標數量是否相等
@@ -98,19 +98,19 @@ function ScpExecutor {
     if (-not (Test-Path $TaskConfigPath)) { throw "Task config file not found: $TaskConfigPath" }
     
     # 讀取伺服器設定並建構Options
-    $sevCnf = (ConvertFrom-Yaml -Ordered ((Get-Content $ServerConfigPath -EA Stop) -join "`n")).$ServerNodeName
-    if (-not $sevCnf) { throw "Specified server not found in config: $ServerNodeName" }
-    $opts = Initialize-Options -ServerConfig $sevCnf
+    $remoteCnf = (ConvertFrom-Yaml -Ordered ((Get-Content $ServerConfigPath -EA Stop) -join "`n")).$ServerNodeName
+    if (-not $remoteCnf) { throw "Specified server not found in config: $ServerNodeName" }
+    $opts = Initialize-Options $remoteCnf
     
     # 讀取任務設定並建構Task
     $taskYaml = ConvertFrom-Yaml -Ordered ((Get-Content $TaskConfigPath -EA Stop) -join "`n")
     $tasks = $TaskName | ForEach-Object {
         $taskCnf = $taskYaml.$_
         if (-not $taskCnf) { throw "Specified task not found in task config: $_" }
-        Initialize-Task -TaskConfig $taskCnf -ServerConfig $sevCnf
+        Initialize-Task $taskCnf $remoteCnf
     }
     
     # 執行所有SCP任務
-    Invoke-ScpTasks -Tasks $tasks -Options $opts
+    Invoke-ScpTasks $tasks $opts
     
-} # ScpExecutor RedHat79 Task1 -WhatIf
+} ScpExecutor RedHat79 Task1 -WhatIf
